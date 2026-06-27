@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizSphere — Test Your Knowledge</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ── Landing-specific ── */
+    body { padding-top: 70px; }
+
+    /* Hero */
+    .hero {
+      min-height: calc(100vh - 70px);
+      display: flex; align-items: center;
+      padding: 4rem 2rem;
+      background: radial-gradient(ellipse 60% 60% at 70% 40%, rgba(37,99,235,.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 40% at 30% 70%, rgba(124,58,237,.1) 0%, transparent 70%),
+                  var(--bg);
+    }
+    .hero-inner {
+      max-width: 1200px; margin: 0 auto; width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: var(--blue-light); color: var(--blue);
+      padding: .35rem .9rem; border-radius: 50px; font-size: .8rem; font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 { font-size: clamp(2rem, 4vw, 3.2rem); margin-bottom: 1rem; }
+    .hero p { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.8; }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-stats {
+      display: flex; gap: 2rem; margin-top: 3rem; flex-wrap: wrap;
+    }
+    .hero-stat strong { display: block; font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); }
+    .hero-stat span { font-size: .8rem; color: var(--text-muted); }
+
+    /* Illustration */
+    .hero-visual {
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .hero-blob {
+      width: 440px; height: 440px; border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
+      background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(124,58,237,.15));
+      display: flex; align-items: center; justify-content: center;
+      animation: blobFloat 6s ease-in-out infinite;
+    }
+    @keyframes blobFloat {
+      0%, 100% { border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%; transform: translateY(0); }
+      50% { border-radius: 40% 60% 30% 70% / 60% 40% 60% 40%; transform: translateY(-15px); }
+    }
+    .hero-card-float {
+      position: absolute; background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow-lg); padding: 1rem 1.25rem; border: 1px solid var(--border);
+    }
+    .float-card-1 { top: 8%; right: 5%; animation: floatY 4s ease-in-out infinite; }
+    .float-card-2 { bottom: 12%; left: 2%; animation: floatY 5s ease-in-out .5s infinite; }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Quiz illustration inside blob */
+    .quiz-illustration { text-align: center; }
+    .quiz-illustration .big-emoji { font-size: 5rem; display: block; margin-bottom: 1rem; }
+    .quiz-illustration p { font-weight: 600; font-size: 1.1rem; color: var(--text-muted); }
+
+    /* Features */
+    .features-section { background: var(--surface); }
+    .feature-card {
+      padding: 2rem; border-radius: var(--radius);
+      border: 1px solid var(--border);
+      transition: all var(--transition);
+      background: var(--surface);
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--blue);
+    }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 1.25rem;
+    }
+    .feature-card h3 { font-size: 1.1rem; margin-bottom: .5rem; }
+    .feature-card p { color: var(--text-muted); font-size: .9rem; line-height: 1.7; }
+
+    /* Footer */
+    footer {
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 3rem 2rem 1.5rem;
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
+    }
+    .footer-brand p { color: var(--text-muted); font-size: .9rem; margin-top: .5rem; line-height: 1.7; }
+    footer h4 { font-size: .95rem; margin-bottom: 1rem; }
+    footer ul li { margin-bottom: .5rem; }
+    footer ul li a { color: var(--text-muted); font-size: .875rem; transition: color var(--transition); }
+    footer ul li a:hover { color: var(--blue); }
+    .social-links { display: flex; gap: .75rem; margin-top: 1rem; }
+    .social-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; cursor: pointer; transition: all var(--transition);
+      color: var(--text-muted); text-decoration: none;
+    }
+    .social-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .footer-bottom {
+      max-width: 1200px; margin: 2rem auto 0;
+      padding-top: 1.5rem; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      color: var(--text-muted); font-size: .85rem;
+    }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all .7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .footer-inner { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    }
+    @media (max-width: 600px) {
+      .footer-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+      .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <span class="navbar-brand">⚡ QuizSphere</span>
+    <ul class="navbar-nav" id="navLinks">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="navbar-actions">
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <div class="fade-in-up">
+        <div class="hero-tag">✨ #1 Online Quiz Platform</div>
+        <h1>Test Your Knowledge<br><span class="gradient-text">Anytime, Anywhere</span></h1>
+        <p>Take quizzes, track your performance, and improve your skills with instant results. Join thousands of students already learning smarter.</p>
+        <div class="hero-btns">
+          <a href="register.html" class="btn btn-primary btn-lg">🚀 Start Quiz</a>
+          <a href="#features" class="btn btn-secondary btn-lg">Learn More</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <strong class="gradient-text" id="statStudents">5,000+</strong>
+            <span>Students</span>
+          </div>
+          <div class="hero-stat">
+            <strong class="gradient-text" id="statQuizzes">200+</strong>
+            <span>Quizzes</span>
+          </div>
+          <div class="hero-stat">
+            <strong class="gradient-text" id="statAttempts">—</strong>
+            <span>Total Attempts</span>
+          </div>
+          <div class="hero-stat">
+            <strong class="gradient-text">98%</strong>
+            <span>Satisfaction</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Illustration -->
+      <div class="hero-visual fade-in" style="animation-delay:.2s">
+        <div class="hero-blob">
+          <div class="quiz-illustration">
+            <span class="big-emoji">🎯</span>
+            <p>Smart Learning<br>Platform</p>
+          </div>
+        </div>
+        <div class="hero-card-float float-card-1">
+          <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:600">
+            <span>✅</span> Quiz Completed!
+          </div>
+          <div style="color:var(--green);font-weight:800;font-size:1.2rem;margin-top:.25rem">Score: 92%</div>
+        </div>
+        <div class="hero-card-float float-card-2">
+          <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:600">
+            🏆 Leaderboard Rank
+          </div>
+          <div style="font-size:1.5rem;margin-top:.25rem">#3 <span style="color:var(--text-muted);font-size:.85rem;font-weight:400">of 500</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section class="section features-section" id="features">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <h2 class="section-title">Why Choose <span class="gradient-text">QuizSphere?</span></h2>
+        <p class="section-subtitle">Everything you need for an exceptional learning experience</p>
+      </div>
+      <div class="grid-3 stagger" id="featuresGrid"></div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT ── -->
+  <section class="section" id="about" style="background:var(--bg)">
+    <div class="container reveal" style="text-align:center;max-width:700px;margin:0 auto">
+      <h2 class="section-title">About <span class="gradient-text">QuizSphere</span></h2>
+      <p style="color:var(--text-muted);font-size:1.05rem;line-height:1.9;margin-top:1rem">
+        QuizSphere is a modern online quiz platform built for students and educators. 
+        Powered by a robust Spring Boot backend with an automated CI/CD testing pipeline, 
+        we ensure reliability, security, and instant performance feedback.
+      </p>
+      <div class="grid-3" style="margin-top:3rem;text-align:left">
+        <div class="stat-card reveal">
+          <div class="stat-icon" style="background:var(--blue-light)">🎓</div>
+          <div class="stat-value gradient-text">5K+</div>
+          <div class="stat-label">Active Learners</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-icon" style="background:var(--purple-light)">📝</div>
+          <div class="stat-value gradient-text">200+</div>
+          <div class="stat-label">Quiz Categories</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-icon" style="background:#D1FAE5">⚡</div>
+          <div class="stat-value gradient-text">99.9%</div>
+          <div class="stat-label">Uptime</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CONTACT ── -->
+  <section class="section features-section" id="contact">
+    <div class="container reveal" style="max-width:600px;margin:0 auto;text-align:center">
+      <h2 class="section-title">Get in <span class="gradient-text">Touch</span></h2>
+      <p class="section-subtitle">Have questions? We'd love to hear from you.</p>
+      <div style="background:var(--surface);border-radius:var(--radius-lg);padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow)">
+        <div class="form-group">
+          <input class="form-control" placeholder="Your Name" />
+        </div>
+        <div class="form-group">
+          <input class="form-control" type="email" placeholder="Email Address" />
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="4" placeholder="Your message..." style="resize:vertical"></textarea>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="showToast('Message sent! We\'ll get back to you soon.','success')">
+          📨 Send Message
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="navbar-brand">⚡ QuizSphere</span>
+        <p>The most modern online quiz platform for students and educators. Test your knowledge, track progress, and achieve excellence.</p>
+        <div class="social-links">
+          <a href="#" class="social-btn">𝕏</a>
+          <a href="#" class="social-btn">in</a>
+          <a href="#" class="social-btn">f</a>
+          <a href="#" class="social-btn">▶</a>
+        </div>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="categories.html">Browse Quizzes</a></li>
+          <li><a href="leaderboard.html">Leaderboard</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">API Guide</a></li>
+          <li><a href="pages/ci-status.html">CI/CD Status</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 QuizSphere. All rights reserved.</span>
+      <span>Built with ❤️ using Spring Boot & Vanilla JS</span>
+    </div>
+  </footer>
+
+  <script src="api.js"></script>
+  <script>
+    // Features data
+    const features = [
+      { icon: '📚', color: '#DBEAFE', title: 'Multiple Categories', desc: 'Choose from Programming, DBMS, AI, GK, Aptitude and more — all in one place.' },
+      { icon: '⏱️', color: '#FEF3C7', title: 'Timer-based Quiz', desc: 'Real-time countdown keeps you sharp. Simulate actual exam conditions.' },
+      { icon: '⚡', color: '#D1FAE5', title: 'Instant Results', desc: 'See your score, percentage, and performance breakdown immediately after submission.' },
+      { icon: '🏆', color: '#EDE9FE', title: 'Leaderboard', desc: 'Compete with thousands of students. Climb the ranks and earn recognition.' },
+      { icon: '🤖', color: '#FCE7F3', title: 'Automated Evaluation', desc: 'Smart auto-grading engine — no manual checking, no delays, just instant feedback.' },
+      { icon: '🔐', color: '#FEE2E2', title: 'Secure Login', desc: 'JWT-powered authentication keeps your account and progress safe at all times.' },
+    ];
+
+    document.getElementById('featuresGrid').innerHTML = features.map(f => `
+      <div class="feature-card">
+        <div class="feature-icon" style="background:${f.color}">${f.icon}</div>
+        <h3>${f.title}</h3>
+        <p>${f.desc}</p>
+      </div>
+    `).join('');
+
+    // Load live attempts count
+    fetch('http://localhost:8080/api/results/stats/attempts')
+      .then(r => r.json())
+      .then(n => { document.getElementById('statAttempts').textContent = n.toLocaleString() + '+'; })
+      .catch(() => { document.getElementById('statAttempts').textContent = '10K+'; });
+
+    // Hamburger
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Navbar scroll
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').style.boxShadow =
+        window.scrollY > 20 ? 'var(--shadow)' : 'none';
+    });
+
+    // Dark mode icon sync
+    function syncThemeIcon() {
+      const t = document.documentElement.getAttribute('data-theme');
+      document.querySelector('.theme-btn').textContent = t === 'dark' ? '☀️' : '🌙';
+    }
+    const _origToggle = toggleTheme;
+    window.toggleTheme = () => { _origToggle(); syncThemeIcon(); };
+    syncThemeIcon();
+  </script>
+</body>
+</html>

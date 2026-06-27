@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — QuizSphere</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { padding: 0; min-height: 100vh; }
+    .auth-layout { min-height: 100vh; display: grid; grid-template-columns: 1fr 1.2fr; }
+    .auth-left {
+      background: linear-gradient(145deg, var(--purple) 0%, var(--blue) 100%);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 3rem; color: #fff; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .auth-left::before {
+      content: ''; position: absolute; width: 350px; height: 350px;
+      border-radius: 50%; background: rgba(255,255,255,.06);
+      bottom: -80px; left: -80px;
+    }
+    .auth-visual { font-size: 5rem; animation: floatY 4s ease-in-out infinite; position: relative; z-index: 1; }
+    @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    .auth-left h2 { font-size: 2rem; margin: 1rem 0 .5rem; position: relative; z-index: 1; }
+    .auth-left p { opacity: .85; position: relative; z-index: 1; }
+
+    .auth-right {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 3rem 2rem; background: var(--surface);
+      overflow-y: auto;
+    }
+    .auth-card { width: 100%; max-width: 460px; }
+    .auth-card h1 { font-size: 1.8rem; margin-bottom: .35rem; }
+    .auth-card > p { color: var(--text-muted); margin-bottom: 2rem; }
+    .back-home { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--text-muted); margin-bottom: 2rem; transition: color var(--transition); }
+    .back-home:hover { color: var(--blue); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: .9rem; color: var(--text-muted); }
+    .auth-footer a { color: var(--blue); font-weight: 600; }
+    .strength-bar { height: 4px; border-radius: 2px; margin-top: .4rem; background: var(--border); }
+    .strength-fill { height: 100%; border-radius: 2px; transition: all .3s ease; }
+    .strength-text { font-size: .75rem; margin-top: .25rem; }
+    @media (max-width: 900px) {
+      .auth-layout { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-layout">
+    <div class="auth-left">
+      <div class="auth-visual">🚀</div>
+      <h2>Join QuizSphere!</h2>
+      <p>Create your free account and start your learning journey today.</p>
+      <div style="margin-top:2rem;position:relative;z-index:1;text-align:left">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;opacity:.9">✨ Free forever — no credit card</div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;opacity:.9">📊 Track your progress</div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;opacity:.9">🏆 Earn achievements</div>
+        <div style="display:flex;align-items:center;gap:.75rem;opacity:.9">🔐 Secure & private</div>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-card fade-in-up">
+        <a href="index.html" class="back-home">← Back to Home</a>
+        <h1>Create Account 🎉</h1>
+        <p>Fill in your details to get started</p>
+
+        <form id="registerForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <div class="input-group">
+                <span class="input-icon">👤</span>
+                <input type="text" class="form-control" id="name" placeholder="John Doe" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <div class="input-group">
+                <span class="input-icon">📱</span>
+                <input type="tel" class="form-control" id="phone" placeholder="+91 9876543210" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="input-group">
+              <span class="input-icon">✉️</span>
+              <input type="email" class="form-control" id="email" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-group">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="form-control" id="password" placeholder="Create a strong password" required oninput="checkStrength(this.value)" />
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="strength-text" id="strengthText"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <div class="input-group">
+              <span class="input-icon">🔑</span>
+              <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat your password" required />
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:1.5rem;font-size:.87rem;color:var(--text-muted)">
+            <input type="checkbox" id="terms" style="margin-top:2px;accent-color:var(--blue)" />
+            <label for="terms">I agree to the <a href="#" style="color:var(--blue)">Terms of Service</a> and <a href="#" style="color:var(--blue)">Privacy Policy</a></label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="registerBtn">
+            Create Account 🚀
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Already have an account? <a href="login.html">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    function checkStrength(pw) {
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (/[A-Z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      const fill = document.getElementById('strengthFill');
+      const text = document.getElementById('strengthText');
+      const map = [
+        { w: '0%', c: 'transparent', t: '' },
+        { w: '25%', c: '#EF4444', t: '⚠️ Weak' },
+        { w: '50%', c: '#F59E0B', t: '🔶 Fair' },
+        { w: '75%', c: '#10B981', t: '✅ Good' },
+        { w: '100%', c: '#2563EB', t: '💪 Strong' },
+      ];
+      fill.style.width = map[score].w;
+      fill.style.background = map[score].c;
+      text.textContent = map[score].t;
+      text.style.color = map[score].c;
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!document.getElementById('terms').checked) {
+        showToast('Please accept the terms and conditions', 'error');
+        return;
+      }
+      const pw = document.getElementById('password').value;
+      const cpw = document.getElementById('confirmPassword').value;
+      if (pw !== cpw) { showToast('Passwords do not match!', 'error'); return; }
+
+      const btn = document.getElementById('registerBtn');
+      showSpinner(btn);
+
+      try {
+        const user = await apiFetch(API.auth.register, {
+          method: 'POST',
+          body: JSON.stringify({
+            name: document.getElementById('name').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            password: pw
+          })
+        });
+        showToast('Account created successfully!', 'success');
+        setTimeout(() => window.location.href = 'login.html', 1200);
+      } catch (err) {
+        hideSpinner(btn);
+        showToast(err.message || 'Registration failed. Try again.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz — QuizSphere</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { padding: 0; min-height: 100vh; background: var(--bg); }
+    .quiz-topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(10px);
+    }
+    .quiz-title { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+    .timer-box {
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--blue-light); color: var(--blue);
+      padding: .5rem 1.25rem; border-radius: 50px;
+      font-weight: 700; font-size: 1rem; font-family: var(--font-display);
+    }
+    .timer-box.warning { background: #FEF3C7; color: #92400E; }
+    .timer-box.danger  { background: #FEE2E2; color: #991B1B; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+    .quiz-layout { display: grid; grid-template-columns: 1fr 280px; gap: 2rem; max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .question-card {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--border); padding: 2.5rem; box-shadow: var(--shadow);
+    }
+    .q-number { font-size: .85rem; color: var(--blue); font-weight: 700; margin-bottom: .5rem; }
+    .q-text { font-size: 1.15rem; font-weight: 600; margin-bottom: 2rem; line-height: 1.7; }
+
+    .options { display: flex; flex-direction: column; gap: .85rem; }
+
+    .q-nav-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 1.5rem; box-shadow: var(--shadow-sm);
+      position: sticky; top: 80px;
+    }
+    .q-nav-title { font-weight: 700; font-size: .9rem; margin-bottom: 1rem; }
+    .nav-legend { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+    .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .75rem; color: var(--text-muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    .quiz-controls { display: flex; gap: 1rem; margin-top: 2rem; }
+
+    /* Loading state */
+    .quiz-loading {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 60vh; gap: 1rem;
+    }
+    .quiz-loading .spinner { width: 40px; height: 40px; border-width: 4px; }
+    .spinner-dark { border-color: rgba(37,99,235,.15); border-top-color: var(--blue); }
+
+    @media (max-width: 768px) {
+      .quiz-layout { grid-template-columns: 1fr; }
+      .q-nav-card { position: static; order: -1; }
+      .quiz-topbar { padding: .75rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="quiz-topbar">
+    <div style="display:flex;align-items:center;gap:1rem">
+      <a href="categories.html" style="color:var(--text-muted);font-size:.9rem">← Exit</a>
+      <div class="quiz-title" id="quizTitle">Loading Quiz...</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div class="timer-box" id="timerBox">
+        ⏱ <span id="timerDisplay">--:--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar" style="border-radius:0;height:5px">
+    <div class="progress-fill" id="topProgress" style="width:0%;transition:width .3s ease"></div>
+  </div>
+
+  <!-- Quiz Layout -->
+  <div class="quiz-layout" id="quizLayout" style="display:none">
+    <!-- Question Card -->
+    <div>
+      <div class="question-card" id="questionCard">
+        <div class="q-number" id="qNumber">Question 1 of ?</div>
+        <div class="q-text" id="qText"></div>
+        <div class="options" id="optionsContainer"></div>
+        <div class="quiz-controls">
+          <button class="btn btn-secondary" id="prevBtn" onclick="navigate(-1)" disabled>← Previous</button>
+          <button class="btn btn-primary" id="nextBtn" onclick="navigate(1)">Next →</button>
+          <button class="btn btn-success" id="submitBtn" onclick="confirmSubmit()" style="display:none">Submit Quiz ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Nav -->
+    <div>
+      <div class="q-nav-card">
+        <div class="q-nav-title">Question Navigator</div>
+        <div class="nav-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Current</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Answered</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div> Unanswered</div>
+        </div>
+        <div class="q-nav" id="qNavigator"></div>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+          <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:.4rem">
+            Answered: <strong id="answeredCount">0</strong> / <strong id="totalCount">0</strong>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="answerProgress" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="quiz-loading" id="quizLoading">
+    <div class="spinner spinner-dark"></div>
+    <p style="color:var(--text-muted)">Loading questions...</p>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Submit Quiz?</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <p style="color:var(--text-muted);margin-bottom:1.5rem">
+        You have answered <strong id="modalAnswered">0</strong> out of <strong id="modalTotal">0</strong> questions.
+        Are you sure you want to submit?
+      </p>
+      <div style="display:flex;gap:1rem">
+        <button class="btn btn-secondary btn-full" onclick="closeModal()">Review Answers</button>
+        <button class="btn btn-primary btn-full" id="submitFinalBtn" onclick="submitQuiz()">Submit Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    requireAuth();
+
+    const params = new URLSearchParams(location.search);
+    const quizId = parseInt(params.get('id')) || 1;
+    const quizTitle = decodeURIComponent(params.get('title') || 'Quiz');
+    const duration = parseInt(params.get('duration')) || 30;
+
+    document.getElementById('quizTitle').textContent = quizTitle;
+    document.title = quizTitle + ' — QuizSphere';
+
+    let questions = [];
+    let answers = {}; // { questionId: selectedAnswer }
+    let currentIdx = 0;
+    let timeLeft = duration * 60;
+    let timerInterval;
+
+    async function loadQuestions() {
+      try {
+        questions = await apiFetch(API.quizzes.questions(quizId));
+        if (!questions || !questions.length) throw new Error('No questions');
+
+        document.getElementById('quizLoading').style.display = 'none';
+        document.getElementById('quizLayout').style.display = 'grid';
+        document.getElementById('totalCount').textContent = questions.length;
+
+        renderNavigator();
+        showQuestion(0);
+        startTimer();
+      } catch (err) {
+        document.getElementById('quizLoading').innerHTML = `
+          <div style="text-align:center">
+            <div style="font-size:3rem;margin-bottom:1rem">❌</div>
+            <p style="color:var(--text-muted)">Failed to load questions for this quiz.</p>
+            <a href="categories.html" class="btn btn-primary" style="margin-top:1rem">← Back to Categories</a>
+          </div>`;
+      }
+    }
+
+    function renderNavigator() {
+      const nav = document.getElementById('qNavigator');
+      nav.innerHTML = questions.map((q, i) => `
+        <button onclick="showQuestion(${i})" id="nav-${i}">${i + 1}</button>
+      `).join('');
+    }
+
+    function showQuestion(idx) {
+      currentIdx = idx;
+      const q = questions[idx];
+      document.getElementById('qNumber').textContent = `Question ${idx + 1} of ${questions.length}`;
+      document.getElementById('qText').textContent =
+  q.questionText || q.question || "Question not found";
+      document.getElementById('topProgress').style.width = ((idx + 1) / questions.length * 100) + '%';
+
+      const selected = answers[q.id];
+      const opts = [
+        { key: 'A', text: q.optionA },
+        { key: 'B', text: q.optionB },
+        { key: 'C', text: q.optionC },
+        { key: 'D', text: q.optionD },
+      ];
+
+      document.getElementById('optionsContainer').innerHTML = opts.map(o => `
+        <label class="option-label ${selected === o.key ? 'selected' : ''}">
+          <input type="radio" name="opt" value="${o.key}" ${selected === o.key ? 'checked' : ''}
+            onchange="selectAnswer('${q.id}', '${o.key}')" />
+          <span style="font-weight:600;min-width:28px;color:var(--blue)">${o.key}.</span>
+          <span>${o.text}</span>
+        </label>
+      `).join('');
+
+      // Controls
+      document.getElementById('prevBtn').disabled = idx === 0;
+      const isLast = idx === questions.length - 1;
+      document.getElementById('nextBtn').style.display = isLast ? 'none' : 'inline-flex';
+      document.getElementById('submitBtn').style.display = isLast ? 'inline-flex' : 'none';
+
+      // Update navigator
+      document.querySelectorAll('.q-nav button').forEach((btn, i) => {
+        btn.className = '';
+        if (i === idx) btn.classList.add('current');
+        else if (answers[questions[i].id]) btn.classList.add('answered');
+      });
+    }
+
+    function selectAnswer(qId, val) {
+      answers[qId] = val;
+      document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+      event.target.closest('.option-label').classList.add('selected');
+
+      // Update nav button
+      const btn = document.getElementById(`nav-${currentIdx}`);
+      if (btn) btn.classList.add('answered');
+
+      // Update counter
+      const count = Object.keys(answers).length;
+      document.getElementById('answeredCount').textContent = count;
+      document.getElementById('answerProgress').style.width = (count / questions.length * 100) + '%';
+    }
+
+    function navigate(dir) {
+      const next = currentIdx + dir;
+      if (next >= 0 && next < questions.length) showQuestion(next);
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+
+        const box = document.getElementById('timerBox');
+        box.className = 'timer-box';
+        if (timeLeft < 300) box.classList.add('warning');
+        if (timeLeft < 60) box.classList.add('danger');
+        if (timeLeft <= 0) { clearInterval(timerInterval); submitQuiz(); }
+      }, 1000);
+    }
+
+    function confirmSubmit() {
+      const count = Object.keys(answers).length;
+      document.getElementById('modalAnswered').textContent = count;
+      document.getElementById('modalTotal').textContent = questions.length;
+      document.getElementById('confirmModal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('confirmModal').classList.remove('open'); }
+
+    async function submitQuiz() {
+      clearInterval(timerInterval);
+      closeModal();
+      const btn = document.getElementById('submitFinalBtn');
+      showSpinner(btn);
+
+      const user = getUser();
+      const payload = {
+        userId: user?.id || 1,
+        quizId: quizId,
+        answers: questions.map(q => ({
+          questionId: q.id,
+          selectedAnswer: answers[q.id] || ''
+        }))
+      };
+
+      try {
+        const result = await apiFetch(API.quizzes.submit, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        // Save result and redirect
+        sessionStorage.setItem('quizResult', JSON.stringify({
+          ...result,
+          timeTaken: duration * 60 - timeLeft,
+          quizTitle
+        }));
+        window.location.href = 'result.html';
+      } catch (err) {
+        hideSpinner(btn);
+        showToast('Submission failed: ' + err.message, 'error');
+      }
+    }
+
+    loadQuestions();
+  </script>
+</body>
+</html>

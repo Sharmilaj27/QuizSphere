@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Categories — QuizSphere</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { padding: 0; }
+    .filter-bar {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap; margin-bottom: 2rem;
+    }
+    .filter-chip {
+      padding: .4rem 1rem; border-radius: 50px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      cursor: pointer; font-size: .85rem; font-weight: 500;
+      transition: all var(--transition); color: var(--text-muted);
+    }
+    .filter-chip.active, .filter-chip:hover {
+      border-color: var(--blue); background: var(--blue-light); color: var(--blue);
+    }
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .quiz-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+      transition: all var(--transition); box-shadow: var(--shadow-sm);
+    }
+    .quiz-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--blue); }
+    .quiz-card-header {
+      padding: 1.5rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .quiz-icon {
+      width: 52px; height: 52px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+    .quiz-card-body { padding: 0 1.5rem 1.5rem; }
+    .quiz-meta { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .quiz-meta span { font-size: .8rem; color: var(--text-muted); display: flex; align-items: center; gap: .3rem; }
+
+    /* Category section headers */
+    .categories-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;
+      margin-bottom: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">⚡ QuizSphere</div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="categories.html" class="active"><span class="nav-icon">📚</span> My Quizzes</a>
+        <a href="leaderboard.html"><span class="nav-icon">🏆</span> Leaderboard</a>
+        <a href="results.html"><span class="nav-icon">📊</span> My Results</a>
+        <a href="profile.html"><span class="nav-icon">👤</span> Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="theme-btn" onclick="toggleTheme()" style="margin-bottom:.75rem">🌙 Toggle Theme</button>
+        <a href="login.html" class="btn btn-secondary btn-sm btn-full" onclick="clearAuth()">🚪 Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">📚 Quiz Categories</h1>
+        <p class="page-subtitle">Choose a quiz to test your knowledge</p>
+      </div>
+
+      <!-- Categories -->
+      <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text-muted);font-weight:600">BROWSE BY TOPIC</h3>
+      <div class="categories-grid" id="catGrid"></div>
+
+      <!-- Search + Filter -->
+      <div class="filter-bar">
+        <div class="search-bar" style="flex:1;max-width:400px">
+          <span>🔍</span>
+          <input type="text" placeholder="Search quizzes..." id="searchInput" oninput="filterQuizzes()" />
+        </div>
+        <button class="filter-chip active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-chip" onclick="setFilter('easy',this)">🟢 Easy</button>
+        <button class="filter-chip" onclick="setFilter('medium',this)">🟡 Medium</button>
+        <button class="filter-chip" onclick="setFilter('hard',this)">🔴 Hard</button>
+      </div>
+
+      <!-- Quiz Cards -->
+      <div class="quiz-grid" id="quizGrid">
+        <div class="skeleton" style="height:180px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:180px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:180px;border-radius:var(--radius)"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    requireAuth();
+
+    const catInfo = {
+      'Programming': { icon: '💻', color: '#DBEAFE' },
+      'Java':        { icon: '☕', color: '#FEF3C7' },
+      'Python':      { icon: '🐍', color: '#D1FAE5' },
+      'JavaScript':  { icon: '⚡', color: '#FEF9C3' },
+      'DBMS':        { icon: '🗄️', color: '#EDE9FE' },
+      'OS':          { icon: '🖥️', color: '#FCE7F3' },
+      'Networks':    { icon: '🌐', color: '#DBEAFE' },
+      'Aptitude':    { icon: '🧮', color: '#FEF3C7' },
+      'GK':          { icon: '🌍', color: '#D1FAE5' },
+      'AI/ML':       { icon: '🤖', color: '#EDE9FE' },
+    };
+
+    const staticCats = Object.entries(catInfo).map(([name, info]) => `
+      <div class="category-card" onclick="document.getElementById('searchInput').value='${name}';filterQuizzes()">
+        <div class="category-icon" style="background:${info.color}">${info.icon}</div>
+        <div class="category-name">${name}</div>
+      </div>
+    `);
+    document.getElementById('catGrid').innerHTML = staticCats.join('');
+
+    let allQuizzes = [];
+    let activeFilter = 'all';
+
+    async function loadQuizzes() {
+      try {
+        allQuizzes = await apiFetch(API.quizzes.all) || [];
+        renderQuizzes(allQuizzes);
+      } catch {
+        document.getElementById('quizGrid').innerHTML = `
+          <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem">
+            <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+            <p>Could not load quizzes. Make sure the backend is running on port 8080.</p>
+          </div>`;
+      }
+    }
+
+    function renderQuizzes(quizzes) {
+      const grid = document.getElementById('quizGrid');
+      if (!quizzes.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem"><div style="font-size:3rem">🔍</div><p>No quizzes match your search.</p></div>`;
+        return;
+      }
+      grid.innerHTML = quizzes.map(q => {
+        const info = catInfo[q.category] || { icon: '📝', color: '#F1F5F9' };
+        return `
+          <div class="quiz-card fade-in-up">
+            <div class="quiz-card-header">
+              <div class="quiz-icon" style="background:${info.color}">${info.icon}</div>
+              <div>
+                <div style="font-weight:700">${q.title}</div>
+                <span class="badge badge-blue" style="margin-top:.3rem">${q.category}</span>
+              </div>
+            </div>
+            <div class="quiz-card-body">
+              <div class="quiz-meta">
+                <span>⏱ ${q.duration} minutes</span>
+                <span>📝 Multiple Choice</span>
+              </div>
+              <div class="progress-bar" style="margin-bottom:1rem">
+                <div class="progress-fill" style="width:${Math.floor(Math.random()*60+30)}%"></div>
+              </div>
+              <a href="quiz.html?id=${q.id}&title=${encodeURIComponent(q.title)}&duration=${q.duration}" class="btn btn-primary btn-full">
+                Start Quiz →
+              </a>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function filterQuizzes() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+
+  let filtered = allQuizzes.filter(quiz => {
+    const matchesText =
+      quiz.title.toLowerCase().includes(q) ||
+      (quiz.category || '').toLowerCase().includes(q);
+
+    const matchesFilter =
+      activeFilter === 'all' ||
+      quiz.difficulty === activeFilter;
+
+    return matchesText && matchesFilter;
+  });
+
+  renderQuizzes(filtered);
+}
+
+    function setFilter(f, el) {
+      activeFilter = f;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      filterQuizzes();
+    }
+
+    loadQuizzes();
+  </script>
+</body>
+</html>

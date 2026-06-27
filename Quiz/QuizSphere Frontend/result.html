@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Result — QuizSphere</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+
+    .result-container { max-width: 750px; width: 100%; }
+
+    .result-header {
+      text-align: center; margin-bottom: 3rem;
+      animation: fadeInUp .6s ease;
+    }
+    .result-emoji { font-size: 4.5rem; display: block; margin-bottom: 1rem; animation: bounceIn .8s ease; }
+    @keyframes bounceIn {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { transform: scale(1.2); }
+      80%  { transform: scale(.95); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .result-card {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--border); padding: 2.5rem; box-shadow: var(--shadow-lg);
+      margin-bottom: 1.5rem;
+    }
+
+    .score-display {
+      display: flex; align-items: center; justify-content: center;
+      gap: 3rem; flex-wrap: wrap; margin-bottom: 2.5rem;
+    }
+
+    /* Circular progress */
+    .circle-wrap { position: relative; width: 160px; height: 160px; }
+    .circle-wrap svg { position: absolute; top: 0; left: 0; }
+    .circle-wrap .circle-bg { fill: none; stroke: var(--border); stroke-width: 12; }
+    .circle-wrap .circle-fill {
+      fill: none; stroke-width: 12;
+      stroke: url(#grad); stroke-linecap: round;
+      transform-origin: center; transform: rotate(-90deg);
+      transition: stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1);
+    }
+    .circle-wrap .circle-text {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .circle-wrap .pct-val { font-size: 2rem; font-weight: 800; font-family: var(--font-display); }
+    .circle-wrap .pct-label { font-size: .75rem; color: var(--text-muted); }
+
+    .score-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .score-stat { text-align: center; }
+    .score-stat .val { font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); }
+    .score-stat .lbl { font-size: .8rem; color: var(--text-muted); margin-top: .15rem; }
+
+    .result-breakdown {
+      display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;
+    }
+    .breakdown-item {
+      flex: 1; min-width: 120px; border-radius: var(--radius-sm);
+      padding: 1rem; text-align: center;
+    }
+    .breakdown-item .bi-val { font-size: 1.5rem; font-weight: 800; }
+    .breakdown-item .bi-lbl { font-size: .78rem; margin-top: .2rem; opacity: .8; }
+
+    .result-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+    .confetti-piece {
+      position: fixed; width: 8px; height: 12px; opacity: 0;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="result-container fade-in-up">
+    <div class="result-header">
+      <span class="result-emoji" id="resultEmoji">🎉</span>
+      <h1 id="resultTitle" style="font-size:2rem">Quiz Completed!</h1>
+      <p id="resultSubtitle" style="color:var(--text-muted);margin-top:.5rem"></p>
+    </div>
+
+    <div class="result-card">
+      <div class="score-display">
+        <!-- Circular Progress -->
+        <div class="circle-wrap">
+          <svg viewBox="0 0 160 160" width="160" height="160">
+            <defs>
+              <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#2563EB"/>
+                <stop offset="100%" style="stop-color:#7C3AED"/>
+              </linearGradient>
+            </defs>
+            <circle class="circle-bg" cx="80" cy="80" r="68"/>
+            <circle class="circle-fill" id="circleFill" cx="80" cy="80" r="68"
+              stroke-dasharray="427.26" stroke-dashoffset="427.26"/>
+          </svg>
+          <div class="circle-text">
+            <div class="pct-val gradient-text" id="pctVal">0%</div>
+            <div class="pct-label">Score</div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="score-stats">
+          <div class="score-stat">
+            <div class="val" id="scoreVal" style="color:var(--blue)">0</div>
+            <div class="lbl">Correct Answers</div>
+          </div>
+          <div class="score-stat">
+            <div class="val" id="wrongVal" style="color:var(--red)">0</div>
+            <div class="lbl">Wrong Answers</div>
+          </div>
+          <div class="score-stat">
+            <div class="val" id="totalVal">0</div>
+            <div class="lbl">Total Questions</div>
+          </div>
+          <div class="score-stat">
+            <div class="val" id="timeVal" style="color:var(--purple)">0m</div>
+            <div class="lbl">Time Taken</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Bars -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+          <span style="font-size:.85rem;color:var(--text-muted)">Accuracy</span>
+          <span style="font-size:.85rem;font-weight:700" id="accuracyPct">0%</span>
+        </div>
+        <div class="progress-bar" style="height:12px">
+          <div class="progress-fill" id="accuracyBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="result-breakdown">
+        <div class="breakdown-item" style="background:var(--blue-light);color:var(--blue)">
+          <div class="bi-val" id="bdTotal">0</div>
+          <div class="bi-lbl">Total Questions</div>
+        </div>
+        <div class="breakdown-item" style="background:#D1FAE5;color:#065F46">
+          <div class="bi-val" id="bdCorrect">0</div>
+          <div class="bi-lbl">Correct</div>
+        </div>
+        <div class="breakdown-item" style="background:#FEE2E2;color:#991B1B">
+          <div class="bi-val" id="bdWrong">0</div>
+          <div class="bi-lbl">Wrong</div>
+        </div>
+        <div class="breakdown-item" style="background:#FEF3C7;color:#92400E">
+          <div class="bi-val" id="bdSkipped">0</div>
+          <div class="bi-lbl">Skipped</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-primary btn-lg" onclick="downloadCert()">🏆 Download Certificate</button>
+      <a href="categories.html" class="btn btn-secondary btn-lg">📝 Take Another Quiz</a>
+      <a href="dashboard.html" class="btn btn-outline btn-lg">🏠 Dashboard</a>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    requireAuth();
+
+    const raw = sessionStorage.getItem('quizResult');
+    const result = raw ? JSON.parse(raw) : null;
+
+    if (!result) {
+      document.querySelector('.result-container').innerHTML = `
+        <div style="text-align:center;padding:3rem">
+          <div style="font-size:4rem">⚠️</div>
+          <h2>No result found</h2>
+          <a href="categories.html" class="btn btn-primary" style="margin-top:1rem">Take a Quiz</a>
+        </div>`;
+    } else {
+      const { score, totalQuestions, percentage, timeTaken, quizTitle } = result;
+      const wrong = totalQuestions - score;
+      const pct = percentage ? percentage.toFixed(1) : ((score / totalQuestions) * 100).toFixed(1);
+      const mins = Math.floor((timeTaken || 0) / 60);
+      const secs = (timeTaken || 0) % 60;
+
+      // Emoji & title
+      let emoji = '🎉', title = 'Excellent!', subtitle = 'Outstanding performance!';
+      if (pct < 40) { emoji = '😔'; title = 'Keep Practicing!'; subtitle = 'Review the material and try again.'; }
+      else if (pct < 60) { emoji = '📚'; title = 'Good Effort!'; subtitle = 'You\'re improving. Keep it up!'; }
+      else if (pct < 80) { emoji = '👏'; title = 'Well Done!'; subtitle = 'Great performance on ' + (quizTitle || 'this quiz') + '!'; }
+
+      document.getElementById('resultEmoji').textContent = emoji;
+      document.getElementById('resultTitle').textContent = title;
+      document.getElementById('resultSubtitle').textContent = subtitle + (quizTitle ? ` — ${quizTitle}` : '');
+
+      // Animate circular progress
+      setTimeout(() => {
+        const circumference = 427.26;
+        const offset = circumference - (pct / 100) * circumference;
+        document.getElementById('circleFill').style.strokeDashoffset = offset;
+        document.getElementById('pctVal').textContent = pct + '%';
+      }, 300);
+
+      document.getElementById('scoreVal').textContent = score;
+      document.getElementById('wrongVal').textContent = wrong;
+      document.getElementById('totalVal').textContent = totalQuestions;
+      document.getElementById('timeVal').textContent = `${mins}m ${secs}s`;
+      document.getElementById('accuracyPct').textContent = pct + '%';
+      setTimeout(() => { document.getElementById('accuracyBar').style.width = pct + '%'; }, 400);
+
+      document.getElementById('bdTotal').textContent = totalQuestions;
+      document.getElementById('bdCorrect').textContent = score;
+      document.getElementById('bdWrong').textContent = wrong;
+      document.getElementById('bdSkipped').textContent = 0;
+
+      // Confetti for good scores
+      if (pct >= 70) launchConfetti();
+    }
+
+    function launchConfetti() {
+      const colors = ['#2563EB','#7C3AED','#10B981','#F59E0B','#EF4444'];
+      for (let i = 0; i < 60; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.cssText = `
+          left:${Math.random()*100}vw;
+          top:0;
+          background:${colors[Math.floor(Math.random()*colors.length)]};
+          animation-duration:${1.5 + Math.random()*2}s;
+          animation-delay:${Math.random()*.5}s;
+          border-radius:${Math.random()>0.5?'50%':'3px'};
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }
+    }
+
+    function downloadCert() {
+      showToast('Certificate download coming soon! 🏆', 'info');
+    }
+  </script>
+</body>
+</html>

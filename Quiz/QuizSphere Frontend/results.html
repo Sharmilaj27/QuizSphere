@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Results — QuizSphere</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">⚡ QuizSphere</div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="categories.html"><span class="nav-icon">📚</span> My Quizzes</a>
+        <a href="leaderboard.html"><span class="nav-icon">🏆</span> Leaderboard</a>
+        <a href="results.html" class="active"><span class="nav-icon">📊</span> My Results</a>
+        <a href="profile.html"><span class="nav-icon">👤</span> Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="theme-btn" onclick="toggleTheme()" style="margin-bottom:.75rem">🌙 Toggle Theme</button>
+        <a href="login.html" class="btn btn-secondary btn-sm btn-full" onclick="clearAuth()">🚪 Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">📊 My Results</h1>
+        <p class="page-subtitle">Your complete quiz performance history</p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid-4 stagger" style="margin-bottom:2rem" id="summaryCards">
+        <div class="stat-card"><div class="stat-icon" style="background:var(--blue-light)">📝</div><div class="stat-value gradient-text" id="sTotalAttempts">—</div><div class="stat-label">Total Attempts</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#D1FAE5">✅</div><div class="stat-value gradient-text" id="sBestScore">—</div><div class="stat-label">Best Score</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--purple-light)">📈</div><div class="stat-value gradient-text" id="sAvgPct">—</div><div class="stat-label">Avg Percentage</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FEF3C7">⚡</div><div class="stat-value gradient-text" id="sPassRate">—</div><div class="stat-label">Pass Rate (≥60%)</div></div>
+      </div>
+
+      <div class="chart-container">
+        <div style="font-weight:700;margin-bottom:1.25rem">All Attempts</div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>#</th><th>Quiz</th><th>Score</th><th>Total</th><th>Percentage</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">
+                <div class="spinner spinner-dark" style="margin:0 auto"></div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+
+    async function loadResults() {
+      try {
+        const results = await apiFetch(API.results.user(user?.id || 1));
+        if (!results || !results.length) {
+          document.getElementById('resultsBody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No results yet. <a href="categories.html">Take a quiz!</a></td></tr>`;
+          ['sTotalAttempts','sBestScore','sAvgPct','sPassRate'].forEach(id => document.getElementById(id).textContent = '0');
+          return;
+        }
+
+        // Summary
+        const total = results.length;
+        const percentages = results.map(r => (r.score / r.totalQuestions) * 100);
+        const best = Math.max(...percentages);
+        const avg = percentages.reduce((a, b) => a + b, 0) / total;
+        const passed = percentages.filter(p => p >= 60).length;
+
+        document.getElementById('sTotalAttempts').textContent = total;
+        document.getElementById('sBestScore').textContent = best.toFixed(1) + '%';
+        document.getElementById('sAvgPct').textContent = avg.toFixed(1) + '%';
+        document.getElementById('sPassRate').textContent = ((passed / total) * 100).toFixed(0) + '%';
+
+        // Table
+        document.getElementById('resultsBody').innerHTML = results.map((r, i) => {
+          const pct = ((r.score / r.totalQuestions) * 100).toFixed(1);
+          const pass = parseFloat(pct) >= 60;
+          return `
+            <tr>
+              <td style="color:var(--text-muted)">${i + 1}</td>
+              <td>
+    <strong>${r.quizTitle}</strong><br>
+    <small style="color:var(--text-muted)">
+        ${r.category}
+    </small>
+</td>
+              <td><strong style="color:var(--blue)">${r.score}</strong></td>
+              <td>${r.totalQuestions}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:.75rem">
+                  <div class="progress-bar" style="width:70px">
+                    <div class="progress-fill" style="width:${pct}%;background:${pass?'var(--green)':'var(--red)'}"></div>
+                  </div>
+                  <span style="font-weight:700;color:${pass?'var(--green)':'var(--red)'}">${pct}%</span>
+                </div>
+              </td>
+              <td><span class="badge ${pass ? 'badge-green' : 'badge-red'}">${pass ? '✅ Pass' : '❌ Fail'}</span></td>
+              <td style="color:var(--text-muted);font-size:.82rem">${r.attemptedAt ? new Date(r.attemptedAt).toLocaleString() : '—'}</td>
+            </tr>`;
+        }).join('');
+      } catch (err) {
+        document.getElementById('resultsBody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Error loading results.</td></tr>`;
+      }
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>

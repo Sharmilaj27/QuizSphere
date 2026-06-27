@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — QuizSphere</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { padding: 0; min-height: 100vh; }
+    .auth-layout { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+    .auth-left {
+      background: linear-gradient(145deg, var(--blue) 0%, var(--purple) 100%);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 3rem; color: #fff; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .auth-left::before {
+      content: ''; position: absolute; width: 300px; height: 300px;
+      border-radius: 50%; background: rgba(255,255,255,.07);
+      top: -50px; right: -50px;
+    }
+    .auth-left::after {
+      content: ''; position: absolute; width: 200px; height: 200px;
+      border-radius: 50%; background: rgba(255,255,255,.05);
+      bottom: -30px; left: -30px;
+    }
+    .auth-left h2 { font-size: 2rem; margin: 1rem 0 .5rem; position: relative; z-index: 1; }
+    .auth-left p { opacity: .85; line-height: 1.8; position: relative; z-index: 1; }
+    .auth-visual { font-size: 5rem; position: relative; z-index: 1; animation: floatY 4s ease-in-out infinite; }
+    @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    .auth-features { list-style: none; margin-top: 2rem; position: relative; z-index: 1; text-align: left; }
+    .auth-features li { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; opacity: .9; font-size: .95rem; }
+
+    .auth-right {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 3rem; background: var(--surface);
+    }
+    .auth-card { width: 100%; max-width: 420px; }
+    .auth-card h1 { font-size: 1.8rem; margin-bottom: .35rem; }
+    .auth-card > p { color: var(--text-muted); margin-bottom: 2rem; }
+
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--text-muted); font-size: .85rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .google-btn {
+      display: flex; align-items: center; justify-content: center; gap: .75rem;
+      width: 100%; padding: .75rem; border-radius: 50px;
+      border: 1.5px solid var(--border); background: var(--surface2);
+      cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--text);
+      transition: all var(--transition);
+    }
+    .google-btn:hover { background: var(--surface); box-shadow: var(--shadow); }
+
+    .forgot-link { text-align: right; margin-top: -.5rem; margin-bottom: 1.25rem; }
+    .forgot-link a { font-size: .85rem; color: var(--blue); }
+
+    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: .9rem; color: var(--text-muted); }
+    .auth-footer a { color: var(--blue); font-weight: 600; }
+
+    .back-home { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--text-muted); margin-bottom: 2rem; transition: color var(--transition); }
+    .back-home:hover { color: var(--blue); }
+
+    .password-toggle { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); background: none; border: none; font-size: 1rem; }
+
+    @media (max-width: 900px) {
+      .auth-layout { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
+      .auth-right { padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-layout">
+    <!-- Left Panel -->
+    <div class="auth-left">
+      <div class="auth-visual">🎯</div>
+      <h2>Welcome Back!</h2>
+      <p>Log in to continue your learning journey and track your progress.</p>
+      <ul class="auth-features">
+        <li>✅ Access 200+ curated quizzes</li>
+        <li>✅ Track your performance</li>
+        <li>✅ Compete on the leaderboard</li>
+        <li>✅ Get instant results</li>
+      </ul>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="auth-right">
+      <div class="auth-card fade-in-up">
+        <a href="index.html" class="back-home">← Back to Home</a>
+        <h1>Sign In 👋</h1>
+        <p>Enter your credentials to access your account</p>
+
+        <button class="google-btn" onclick="showToast('Google login coming soon!','info')">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="divider">or sign in with email</div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="input-group">
+              <span class="input-icon">✉️</span>
+              <input type="email" class="form-control" id="email" placeholder="you@example.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-group" style="position:relative">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="form-control" id="password" placeholder="Enter password" required />
+              <button type="button" class="password-toggle" id="pwToggle">👁️</button>
+            </div>
+          </div>
+          <div class="forgot-link"><a href="#">Forgot Password?</a></div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="loginBtn">
+            Sign In →
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Don't have an account? <a href="register.html">Create Account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    // Password toggle
+    document.getElementById('pwToggle').addEventListener('click', function() {
+      const pw = document.getElementById('password');
+      pw.type = pw.type === 'password' ? 'text' : 'password';
+      this.textContent = pw.type === 'password' ? '👁️' : '🙈';
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      showSpinner(btn);
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const user = await apiFetch(API.auth.login, {
+    method: 'POST',
+    body: JSON.stringify({
+        email,
+        password
+    })
+});
+
+setAuth("demo-token", {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role
+});
+        showToast('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      } catch (err) {
+        hideSpinner(btn);
+        showToast(err.message || 'Login failed. Check your credentials.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
